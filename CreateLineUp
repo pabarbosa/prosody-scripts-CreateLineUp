@@ -1,0 +1,68 @@
+# CreateLineUp.psc
+# Script implemented by Plinio A. Barbosa (IEL/Univ. of Campinas, Brazil) for computing
+# spectral moments
+# Copyright (C) 2021 Barbosa, P. A.
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; version 2 of the License.
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+# Date: June 2021
+form File acquisition
+ word AudiofileExtension *.wav
+ word TargetFile fila02_EL2_VozAlvo.wav
+ integer SilenceDur_(s) 5
+ word LineUpName lineup_02_BPT
+endform
+# Creates the list of all files with the extension given by the variable AudiofileExtension (default = WAV)
+Create Strings as file list... list 'audiofileExtension$'
+numberOfFiles = Get number of strings
+if !numberOfFiles
+	exit There are no sound files in the folder!
+endif
+Create Sound from formula... silence 1 0 5 22050 0
+Copy... temp
+Read from file... 'targetFile$'
+Scale intensity... 70
+samplingrate = Get sampling frequency
+  if samplingrate <> 22050
+   Resample... 22050 50
+  endif
+targetname$ = selected$("Sound")
+select Sound temp
+Copy... temp
+select Sound 'targetname$'
+plus Sound temp
+Concatenate
+Rename... temp
+p = Create Permutation... seed 'numberOfFiles' yes
+#Permute randomly... 0 0
+Rename... perm
+for i from 1 to numberOfFiles
+ index = Get value... i
+ select Strings list
+ audiofile$ = Get string... 'index'
+ if audiofile$ <> targetFile$
+  Read from file... 'audiofile$'
+  Scale intensity... 70
+  samplingrate = Get sampling frequency
+  if samplingrate <> 22050
+   Resample... 22050 50
+  endif
+  filename$ = selected$("Sound")
+  select Sound silence
+  Copy... silence
+  select Sound temp
+  plus Sound 'filename$'
+  plus Sound silence
+  Concatenate
+  Rename... temp
+ endif
+ select Permutation perm
+endfor
+select Sound temp
+Save as WAV file... 'lineUpName$'.wav
